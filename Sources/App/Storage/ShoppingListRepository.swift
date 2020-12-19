@@ -21,7 +21,7 @@ struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepositor
     func create(_ owner: User, list: ShoppingList) -> EventLoopFuture<ShoppingList> {
         return list.create(on: database)
             .flatMap { _ in
-                owner.$allLists.attach(list, on: database)
+                owner.$allLists.attach(list, on: self.database)
             }
             .transform(to: list)
     }
