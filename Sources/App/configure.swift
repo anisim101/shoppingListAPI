@@ -7,10 +7,10 @@ import JWT
 public func configure(_ app: Application) throws {
 
     app.databases.use(.postgres(hostname: "localhost",
-                                port: 1212,
-                                username: "postgres",
-                                password: "",
-                                database: "shoppingapp"), as: .psql)
+                                port: 5432,
+                                username: "dbuser",
+                                password: "62egegos",
+                                database: "shopinglistapp"), as: .psql)
 
     
     app.jwt.signers.use(.hs256(key: "secret"))
