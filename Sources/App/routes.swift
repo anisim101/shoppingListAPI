@@ -2,13 +2,10 @@ import Fluent
 import Vapor
 
 func routes(_ app: Application) throws {
-    app.get { req in
-        return "It works!"
+   
+    app.group("api") { api in
+        try! api.register(collection: AuthController())
+        try! api.register(collection: UserInfoController())
+        try! api.register(collection: ShoppingListController())
     }
-
-    app.get("hello") { req -> String in
-        return "Hello, world!"
-    }
-
-    try app.register(collection: TodoController())
 }
