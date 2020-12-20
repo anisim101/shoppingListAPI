@@ -19,3 +19,19 @@ struct AuthResponse: Content {
     }
     
 }
+
+
+struct SuccessResponseModel<T: Content>: Content, ResponseProtocol {
+    
+    var message: String
+    var data: T
+    
+    var status: HTTPStatus {
+        return .ok
+    }
+    
+    init(message: String = "OK", data: T) {
+        self.message = message
+        self.data = data
+    }
+}

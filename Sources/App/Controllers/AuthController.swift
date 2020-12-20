@@ -17,19 +17,22 @@ class AuthController: RouteCollection {
         }
     }
     
-    
-    private func register(_ req: Request) throws -> EventLoopFuture<AuthResponse> {
-        try RegisterRequest.validate(content: req)
-        let registerRequest = try req.content.decode(RegisterRequest.self)
+    private func register(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
+        do {
+            try RegisterRequest.validate(content: req)
+        } catch {
+            throw AuthenticationError.invalidEmailOrPasswordFormat
+        }
         
-        guard registerRequest.password == registerRequest.confirmPassword else {
-            throw AuthenticationError.passwordsDontMatch
+        guard let registerRequest = try? req.content.decode(RegisterRequest.self) else {
+            throw RequestError.invalidJson
         }
         
         return req.password
             .async
             .hash(registerRequest.password)
-            .flatMapThrowing { try User(from: registerRequest, hash: $0) }
+            .flatMapThrowing {
+                try User(from: registerRequest, hash: $0) }
             .flatMap { user in
                 req.users
                     .create(user)
@@ -37,23 +40,31 @@ class AuthController: RouteCollection {
                         if let dbError = $0 as? DatabaseError, dbError.isConstraintFailure {
                             throw AuthenticationError.emailAlreadyExists
                         }
-                        throw $0
+                        throw InternalError.internalDatabaseError
                     }
                     .flatMapThrowing { _ in
                         let token = try user.getToken(req)
-                        return AuthResponse(user: user, token: token)
+                        
+                        return SuccessResponseModel(data: AuthResponse(user: user, token: token))
                     }
             }
     }
     
-    private func login(_ req: Request) throws -> EventLoopFuture<AuthResponse>{
+    private func login(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
         
-        try LoginRequest.validate(content: req)
-        let loginRequest = try req.content.decode(LoginRequest.self)
+        do {
+            try LoginRequest.validate(content: req)
+        } catch {
+            throw AuthenticationError.invalidEmailOrPassword
+        }
+
+        guard let loginRequest = try? req.content.decode(LoginRequest.self) else {
+            throw RequestError.invalidJson
+        }
         
         return req.users
             .find(email: loginRequest.email)
-            .unwrap(or: AuthenticationError.invalidEmailOrPassword)
+            .unwrap(or: AuthenticationError.invalidEmailOrPassword )
             .flatMap { user -> EventLoopFuture<User> in
                 return req.password
                     .async
@@ -64,7 +75,7 @@ class AuthController: RouteCollection {
             }
             .flatMapThrowing {
                 let token = try $0.getToken(req)
-                return AuthResponse(user: $0, token: token)
+                return SuccessResponseModel(data: AuthResponse(user: $0, token: token))
             }
         
     }

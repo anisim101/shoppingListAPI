@@ -61,26 +61,25 @@ final class User: Model, Content, UserInfoProtocol {
         self.avatarImageKey = avatarImageKey
     }
     
-    
     func getToken(_ req: Request) throws -> String {
         let payload = TestPayload(expiration: .init(value: .distantFuture), user: self)
-        
-        return try req.jwt.sign(payload)
-        
+        do {
+            let token = try req.jwt.sign(payload)
+            return token
+        } catch {
+            throw AuthenticationError.invalidToken
+        }
     }
 }
 
-
-extension User: Authenticatable {
-    
-}
-
+extension User: Authenticatable { }
 
 extension User {
     static func auth(req: Request) throws -> EventLoopFuture<User> {
-        let email =  try req.jwt.verify(as: TestPayload.self).user.email
+        guard let email = try? req.jwt.verify(as: TestPayload.self).user.email else {
+            throw AuthenticationError.invalidToken
+        }
         return req.users.find(email: email)
-            .unwrap(or: Abort(.unauthorized))
-        
+            .unwrap(or: AuthenticationError.notAuthorised)
     }
 }

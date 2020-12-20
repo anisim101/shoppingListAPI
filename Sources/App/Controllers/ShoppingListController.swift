@@ -16,26 +16,15 @@ class ShoppingListController: RouteCollection {
         })
     }
     
-    private func createList(_ req: Request) throws -> EventLoopFuture<ShoppingList> {
-        
-        let request = try req.content.decode(NewShoppingListRequest.self)
+    private func createList(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<ShoppingList>> {
+        guard let request = try? req.content.decode(NewShoppingListRequest.self) else {
+            throw RequestError.invalidJson
+        }
         return  try User.auth(req: req)
             .flatMap { user in
                 req.shoppingLists.create(user, list: ShoppingList.from(request, owner: user))
-                
+                    .map {SuccessResponseModel(data: $0) }
             }
     }
     
-//    private func deleteList(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
-//
-//        guard let listId = try req.parameters.get("list_id") else {
-//            Abort(.badRequest)
-//
-//        }
-//        return try  User.auth(req: req)
-//            .map { user in
-//                req.shoppingLists.remove(user.id!, listId: UUID(uuidString: listId))
-//            }
-//            .transform(to: .ok)
-//    }
 }
