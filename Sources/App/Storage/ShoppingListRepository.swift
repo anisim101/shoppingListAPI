@@ -38,7 +38,7 @@ struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepositor
             
             .flatMap { list -> EventLoopFuture<Error?> in
                 if let list = list {
-                   return list.delete(on: database)
+                    return list.delete(on: self.database)
                         .map { nil }
                     
                 }
