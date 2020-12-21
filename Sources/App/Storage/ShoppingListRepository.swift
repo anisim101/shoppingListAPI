@@ -42,7 +42,7 @@ struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepositor
                         .map { nil }
                     
                 }
-                return database.eventLoop.makeSucceededFuture(RequestError.wrongRequest)
+                return self.database.eventLoop.makeSucceededFuture(RequestError.wrongRequest)
                
             }
             
