@@ -9,13 +9,8 @@ import Vapor
 
 enum RequestError: Error, ResponseProtocol {
     
-    case invalidJson
-    var code: Int {
-        switch self {
-        case .invalidJson:
-            return 1
-        }
-    }
+    case invalidJson, wrongRequest
+    
     
     var status: HTTPStatus {
         return .badRequest
@@ -25,6 +20,8 @@ enum RequestError: Error, ResponseProtocol {
         switch self {
         
         case .invalidJson:
+            return "Wrong request"
+        case .wrongRequest:
             return "Wrong request"
         }
     }

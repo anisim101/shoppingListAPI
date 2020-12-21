@@ -20,6 +20,7 @@ struct CreateUserLists: Migration {
                    .uuid,
                    .required,
                    .references(User.schema, .id))
+            
             .create()
     }
     

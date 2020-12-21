@@ -10,7 +10,8 @@ import Fluent
 
 protocol ShoppingListRepository: Repository {
     func create(_ owner: User, list: ShoppingList) -> EventLoopFuture<ShoppingList>
-//    func remove(_ ownerId: UUID, listId: UUID) -> EventLoopFuture<Void>
+    func remove(_ ownerId: UUID, listId: UUID) -> EventLoopFuture<Void>
+    
 }
 
 struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepository {
@@ -26,22 +27,23 @@ struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepositor
             .transform(to: list)
     }
     
-//    func remove(_ ownerId: UUID, listId: UUID) -> EventLoopFuture<Void> {
-//        let shoppingList = ShoppingList.query(on: database)
-//            .filter(\._$id == listId)
-//            .join(User.self, on: \ShoppingList.$owner.$id ==  \User.$id)
-//            .filter(User.self, \.$id == ownerId)
-//            .first()
-//            .unwrap(or: Abort(.badRequest))
-//            .map {
-//                $0.delete(on: database)
-//            }
-//            .transform(to: ())
-//            
-//            
-//        return shoppingList
-//            
-//    }
+    func remove(_ ownerId: UUID, listId: UUID) -> EventLoopFuture<Void> {
+        let shoppingList = ShoppingList.query(on: database)
+            .filter(\._$id == listId)
+            .join(User.self, on: \ShoppingList.$owner.$id ==  \User.$id)
+            .join(User.self, on: \UserLists.$id ==  \User.$id)
+            .filter(User.self, \.$id == ownerId)
+            .first()
+            .unwrap(or: Abort(.badRequest))
+            .map {
+                $0.delete(on: database)
+            }
+            .transform(to: ())
+            
+            
+        return shoppingList
+            
+    }
 }
 
 extension DatabaseShoppingListRepository {

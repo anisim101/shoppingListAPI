@@ -12,7 +12,7 @@ class ShoppingListController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.group("lists", configure: {
             $0.post("create", use:  createList)
-//            $0.delete("delete", use: deleteList)
+            $0.delete(":list_id", use: deleteList)
         })
     }
     
@@ -26,5 +26,21 @@ class ShoppingListController: RouteCollection {
                     .map {SuccessResponseModel(data: $0) }
             }
     }
+    
+        private func deleteList(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+    
+            guard let listIdString = req.parameters.get("list_id"),
+                  let listUUID = UUID(uuidString: listIdString) else {
+                throw RequestError.wrongRequest
+            }
+            
+            return try  User.auth(req: req)
+                .map { $0.id }
+                .unwrap(or: InternalError.internalError)
+                .map { userId in
+                    req.shoppingLists.remove(userId, listId: listUUID)
+                }
+                .transform(to: .ok)
+        }
     
 }

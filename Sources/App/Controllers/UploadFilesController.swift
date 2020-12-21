@@ -11,10 +11,7 @@ public enum ImageType: String, Codable {
     case userAvatar = "user_avatar"
     
     func folderName() -> String {
-        switch self {
-        case .userAvatar:
-            return "user_avatar"
-        }
+        return self.rawValue
     }
 }
 
