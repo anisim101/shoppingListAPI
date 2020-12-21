@@ -16,7 +16,7 @@ struct CreateShoppingLists: Migration {
             .field(ShoppingList.FieldKeys.listName, .string, .required)
             .field(ShoppingList.FieldKeys.listImageKey, .string, .required)
             .field(ShoppingList.FieldKeys.creatingDate, .datetime, .required)
-//            .foreignKey(ShoppingList.FieldKeys.ownerId, references: User.schema, .id, onDelete: .cascade)
+            
             .field(ShoppingList.FieldKeys.ownerId,
                    .uuid,
                    .required,

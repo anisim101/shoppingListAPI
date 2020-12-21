@@ -27,20 +27,28 @@ class ShoppingListController: RouteCollection {
             }
     }
     
-        private func deleteList(_ req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        private func deleteList(_ req: Request) throws -> EventLoopFuture<SuccessResponse> {
     
             guard let listIdString = req.parameters.get("list_id"),
                   let listUUID = UUID(uuidString: listIdString) else {
                 throw RequestError.wrongRequest
             }
             
-            return try  User.auth(req: req)
+            return  try  User.auth(req: req)
                 .map { $0.id }
                 .unwrap(or: InternalError.internalError)
-                .map { userId in
-                    req.shoppingLists.remove(userId, listId: listUUID)
+                .flatMap { userId in
+                   return req.shoppingLists.remove(userId, listId: listUUID)
                 }
-                .transform(to: .ok)
+                .guard({ $0 == nil }, else: RequestError.wrongRequest )
+                .map { _ in
+                    return SuccessResponse()
+                }
+            
+                
+            
+                
+                
         }
     
 }
