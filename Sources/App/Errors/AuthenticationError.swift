@@ -16,6 +16,7 @@ enum AuthenticationError: Error, ResponseProtocol {
     case invalidToken
     case invalidEmailOrPassword
     case notAuthorised
+    case noPermission
     
     var message: String {
         switch self {
@@ -29,6 +30,8 @@ enum AuthenticationError: Error, ResponseProtocol {
             return "Invalid email or password"
         case .notAuthorised:
             return "Not authorised"
+        case .noPermission:
+            return "No permission for that action"
         }
     }
     

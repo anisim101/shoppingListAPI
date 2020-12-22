@@ -9,6 +9,8 @@ import Vapor
 
 func middleware(_ app: Application) throws {
     let error = ErrorMiddleware.status(environment: app.environment)
-    app.middleware = .init()
+
     app.middleware.use(error)
+    
 }
+
