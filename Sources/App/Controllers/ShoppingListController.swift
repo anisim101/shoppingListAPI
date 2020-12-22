@@ -13,8 +13,17 @@ class ShoppingListController: RouteCollection {
         routes.group("lists", configure: {
             $0.post("create", use:  createList)
             $0.delete(":list_id", use: deleteList)
-            $0.post("addMember", use: addMember)
+            $0.post("add_member", use: addMember)
+            $0.get("all", use: allLists)
         })
+    }
+    
+    private func allLists(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<[ShoppingList]>> {
+        return try User.auth(req: req)
+            .map { $0.id}
+            .unwrap(orError: InternalError.internalError)
+            .flatMap { req.shoppingLists.allLists($0) }
+            .map{ SuccessResponseModel(data: $0)}
     }
     
     private func addMember(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<ShoppingList>> {
@@ -24,8 +33,8 @@ class ShoppingListController: RouteCollection {
         
         let currentUser = try User.auth(req: req)
         let member = req.users.find(id: request.memberId)
-             .unwrap(orError: RequestError.wrongRequest)
-       
+            .unwrap(orError: RequestError.wrongRequest)
+        
         let list = req.shoppingLists.getList(listId: request.listId)
             .unwrap(orError: RequestError.wrongRequest)
         
@@ -61,24 +70,21 @@ class ShoppingListController: RouteCollection {
             }
     }
     
-        private func deleteList(_ req: Request) throws -> EventLoopFuture<SuccessResponse> {
-    
-            guard let listUUID: UUID = req.parameters.get("list_id") else {
-                throw RequestError.wrongRequest
-            }
-            
-            return  try  User.auth(req: req)
-                .map { $0.id }
-                .unwrap(or: InternalError.internalError)
-                .flatMap { userId in
-                   return req.shoppingLists.remove(userId, listId: listUUID)
-                }
-                .guard({ $0 == nil }, else: RequestError.wrongRequest )
-                .map { _ in
-                    return SuccessResponse()
-                }
+    private func deleteList(_ req: Request) throws -> EventLoopFuture<SuccessResponse> {
         
-                
+        guard let listUUID: UUID = req.parameters.get("list_id") else {
+            throw RequestError.wrongRequest
         }
-    
+        
+        return  try  User.auth(req: req)
+            .map { $0.id }
+            .unwrap(or: InternalError.internalError)
+            .flatMap { userId in
+                return req.shoppingLists.remove(userId, listId: listUUID)
+            }
+            .guard({ $0 == nil }, else: RequestError.wrongRequest )
+            .map { _ in
+                return SuccessResponse()
+            }
+    }
 }

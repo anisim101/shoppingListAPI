@@ -13,10 +13,10 @@ protocol ShoppingListRepository: Repository {
     func remove(_ ownerId: UUID, listId: UUID) -> EventLoopFuture<Error?>
     func addMember(to list: ShoppingList, member: User) -> EventLoopFuture<Void> 
     func getList(listId: UUID) -> EventLoopFuture<ShoppingList?>
+    func allLists(_ userID: UUID) -> EventLoopFuture<[ShoppingList]>
 }
 
 struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepository {
-    
     
     var database: Database
     
@@ -46,12 +46,19 @@ struct DatabaseShoppingListRepository: ShoppingListRepository, DatabaseRepositor
     
     func getList(listId: UUID) -> EventLoopFuture<ShoppingList?> {
         return ShoppingList.find(listId, on: database)
-        
     }
     
     func addMember(to list: ShoppingList, member: User) -> EventLoopFuture<Void> {
         return member.$allLists.attach(list, on: database)
     }
+    
+    func allLists(_ userID: UUID) -> EventLoopFuture<[ShoppingList]> {
+        return ShoppingList.query(on: database)
+            .with(\.$members)
+            .filter(\.$owner.$id == userID)
+            .all()
+    }
+    
 }
 
 extension DatabaseShoppingListRepository {

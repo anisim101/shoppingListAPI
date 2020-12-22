@@ -7,8 +7,6 @@
 
 import Vapor
 
-
-
 func migrations(_ app: Application) throws {
     app.migrations.add(CreateUsers())
     app.migrations.add(CreateShoppingLists())
