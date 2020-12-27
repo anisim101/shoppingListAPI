@@ -30,7 +30,7 @@ final class User: Model, Content, UserInfoProtocol {
     var email: String
     
     @Field(key: FieldKeys.hashPassword)
-    var hashPassword: String
+    var hashPassword: String?
     
     @Field(key: FieldKeys.firstName)
     var firstName: String?
@@ -50,7 +50,7 @@ final class User: Model, Content, UserInfoProtocol {
     
     required init() { }
     
-    init(email: String, hashPassword: String,
+    init(email: String, hashPassword: String? = nil ,
          avatarImageKey: String? = nil,
          firstName: String? = nil,
          secondName: String? = nil) {

@@ -15,7 +15,7 @@ struct CreateUsers: Migration {
         database.schema(User.schema)
             .id()
             .field(User.FieldKeys.email, .string, .required)
-            .field(User.FieldKeys.hashPassword, .string, .required)
+            .field(User.FieldKeys.hashPassword, .string)
             .field(User.FieldKeys.firstName, .string)
             .field(User.FieldKeys.secondName, .string)
             .field(User.FieldKeys.avatarImageKey, .string)

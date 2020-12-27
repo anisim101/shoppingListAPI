@@ -14,6 +14,7 @@ class AuthController: RouteCollection {
         routes.group("auth") { auth in
             auth.post("register", use: register)
             auth.post("login", use: login)
+            auth.post("apple", use: SWA)
         }
     }
     
@@ -57,7 +58,7 @@ class AuthController: RouteCollection {
         } catch {
             throw AuthenticationError.invalidEmailOrPassword
         }
-
+        
         guard let loginRequest = try? req.content.decode(LoginRequest.self) else {
             throw RequestError.invalidJson
         }
@@ -68,7 +69,7 @@ class AuthController: RouteCollection {
             .flatMap { user -> EventLoopFuture<User> in
                 return req.password
                     .async
-                    .verify(loginRequest.password, created: user.hashPassword)
+                    .verify(loginRequest.password, created: user.hashPassword ?? "")
                     .guard({ $0 == true }, else: AuthenticationError.invalidEmailOrPassword)
                     .transform(to: user)
                 
@@ -77,6 +78,45 @@ class AuthController: RouteCollection {
                 let token = try $0.getToken(req)
                 return SuccessResponseModel(data: AuthResponse(user: $0, token: token))
             }
+        
+    }
+    
+    private func SWA(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
+        
+        struct SIWARequestBody: Content {
+            let firstName: String?
+            let lastName: String?
+            let appleIdentityToken: String
+        }
+        
+        guard let userBody = try? req.content.decode(SIWARequestBody.self) else { throw RequestError.wrongRequest }
+        
+        
+        let appleIdentityToken = req.jwt.apple.verify(userBody.appleIdentityToken,
+                                                      applicationIdentifier: "com.tegoo.app")
+        
+        return  appleIdentityToken.flatMap { appleIdentityToken in
+            let email = appleIdentityToken.email!
+            let dbUser =  req.users.find(email: email)
+            
+            return dbUser
+                .flatMap { user -> EventLoopFuture<User> in
+                    if user != nil  {
+                        return dbUser.unwrap(orError: InternalError.internalError)
+                        
+                    } else {
+                        let newUser = User(email: email,
+                                           firstName: userBody.firstName,
+                                           secondName: userBody.lastName)
+                        return  req.users.create(newUser).transform(to: newUser)
+                        
+                    }
+                }
+                .flatMapThrowing { user in
+                    let token = try user.getToken(req)
+                    return SuccessResponseModel(data: AuthResponse(user: user, token: token))
+                }
+        }
         
     }
 }

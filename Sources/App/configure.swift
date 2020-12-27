@@ -24,6 +24,7 @@ public func configure(_ app: Application) throws {
 
  
     
+    app.jwt.apple.applicationIdentifier = "com.tegoo.app"
     app.jwt.signers.use(.hs256(key: "secret"))
     try migrations(app)
     try services(app)

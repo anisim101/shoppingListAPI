@@ -16,7 +16,6 @@ struct CreateShoppingLists: Migration {
             .field(ShoppingList.FieldKeys.listName, .string, .required)
             .field(ShoppingList.FieldKeys.listImageKey, .string, .required)
             .field(ShoppingList.FieldKeys.creatingDate, .datetime, .required)
-            
             .field(ShoppingList.FieldKeys.ownerId,
                    .uuid,
                    .required,
