@@ -8,17 +8,17 @@ import JWT
 public func configure(_ app: Application) throws {
     
 //    if true {
-        app.databases.use(.postgres(hostname: "localhost",
-                                    port: 1212,
-                                    username: "postgres",
-                                    password: "",
-                                    database: "shoppingapp"), as: .psql)
-//    } else {
 //        app.databases.use(.postgres(hostname: "localhost",
-//                                    port: 5432,
-//                                    username: "dbuser",
-//                                    password: "62egegos",
-//                                    database: "shopinglistapp"), as: .psql)
+//                                    port: 1212,
+//                                    username: "postgres",
+//                                    password: "",
+//                                    database: "shoppingapp"), as: .psql)
+//    } else {
+        app.databases.use(.postgres(hostname: "localhost",
+                                    port: 5432,
+                                    username: "dbuser",
+                                    password: "62egegos",
+                                    database: "shopinglistapp"), as: .psql)
 //
 //    }
 
