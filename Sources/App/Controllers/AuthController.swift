@@ -8,8 +8,6 @@
 import Foundation
 import Vapor
 import Fluent
-import ImperialGoogle
-
 
 class AuthController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -53,7 +51,7 @@ class AuthController: RouteCollection {
                     }
             }
     }
-
+    
     private func login(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
         
         do {
@@ -130,7 +128,28 @@ class AuthController: RouteCollection {
     
     private func SWG(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
         
-        let userInfo = try Google.getUser(on: req)
+        struct SWGRequest: Content {
+            let idToken: String
+        }
+        
+        struct GoogleUserInfo: Content {
+            let email: String
+            let name: String
+        }
+        
+        guard let request = try?  req.content.decode(SWGRequest.self) else { throw RequestError.invalidJson }
+        
+        var urlString = "https://oauth2.googleapis.com/tokeninfo?id_token="
+        urlString += request.idToken
+        let uri = URI(string: urlString)
+        let userInfo =  req
+            .client
+            .get(uri)
+            .guard({ $0.status == .ok }, else: RequestError.wrongRequest )
+            .map { response in
+                return try? response.content.decode(GoogleUserInfo.self)
+            }
+            .unwrap(or: InternalError.internalError)
         
         let dbUser = userInfo.flatMap { info in
             return req.users.find(email: info.email)
