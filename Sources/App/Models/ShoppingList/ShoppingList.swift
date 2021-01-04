@@ -8,6 +8,13 @@
 import Vapor
 import Fluent
 
+struct ShoppingListResponse: Content  {
+    var id: UUID? = nil
+    var listName: String
+    var listImageKey: String
+    var creatingDate: Date
+    var ownerId: UUID?
+}
 
 final class ShoppingList: Model, Content {
     

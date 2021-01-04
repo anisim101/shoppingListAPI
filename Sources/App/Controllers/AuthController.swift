@@ -8,6 +8,8 @@
 import Foundation
 import Vapor
 import Fluent
+import ImperialGoogle
+
 
 class AuthController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -15,6 +17,7 @@ class AuthController: RouteCollection {
             auth.post("register", use: register)
             auth.post("login", use: login)
             auth.post("apple", use: SWA)
+            auth.post("google", use: SWG)
         }
     }
     
@@ -50,7 +53,7 @@ class AuthController: RouteCollection {
                     }
             }
     }
-    
+
     private func login(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
         
         do {
@@ -87,6 +90,7 @@ class AuthController: RouteCollection {
             let firstName: String?
             let lastName: String?
             let appleIdentityToken: String
+            let pushToken: String
         }
         
         guard let userBody = try? req.content.decode(SIWARequestBody.self) else { throw RequestError.wrongRequest }
@@ -95,27 +99,57 @@ class AuthController: RouteCollection {
         let appleIdentityToken = req.jwt.apple.verify(userBody.appleIdentityToken,
                                                       applicationIdentifier: "com.tegoo.app")
         
-        return  appleIdentityToken.flatMap { appleIdentityToken in
-            let email = appleIdentityToken.email!
-            let dbUser =  req.users.find(email: email)
-            
-            return dbUser
-                .flatMap { user -> EventLoopFuture<User> in
-                    if user != nil  {
-                        return dbUser.unwrap(orError: InternalError.internalError)
-                        
-                    } else {
-                        let newUser = User(email: email,
-                                           firstName: userBody.firstName,
-                                           secondName: userBody.lastName)
-                        return  req.users.create(newUser).transform(to: newUser)
-                        
+        return  appleIdentityToken
+            .guard({ $0.email != nil }, else: RequestError.wrongRequest)
+            .flatMap { appleIdentityToken in
+                
+                let email = appleIdentityToken.email!
+                let dbUser = req.users.find(email: email)
+                
+                return dbUser
+                    
+                    .flatMap { user -> EventLoopFuture<User> in
+                        if user != nil  {
+                            return dbUser.unwrap(orError: InternalError.internalError)
+                            
+                        } else {
+                            let newUser = User(email: email,
+                                               firstName: userBody.firstName,
+                                               secondName: userBody.lastName)
+                            return  req.users.create(newUser).transform(to: newUser)
+                            
+                        }
                     }
-                }
-                .flatMapThrowing { user in
-                    let token = try user.getToken(req)
-                    return SuccessResponseModel(data: AuthResponse(user: user, token: token))
-                }
+                    .flatMapThrowing { user in
+                        let token = try user.getToken(req)
+                        return SuccessResponseModel(data: AuthResponse(user: user, token: token))
+                    }
+            }
+        
+    }
+    
+    private func SWG(_ req: Request) throws -> EventLoopFuture<SuccessResponseModel<AuthResponse>> {
+        
+        let userInfo = try Google.getUser(on: req)
+        
+        let dbUser = userInfo.flatMap { info in
+            return req.users.find(email: info.email)
+        }
+        
+        return  userInfo.and(dbUser).flatMap { userInfo, databaseUser -> EventLoopFuture<User> in
+            if databaseUser != nil  {
+                return dbUser.unwrap(orError: InternalError.internalError)
+            } else {
+                let newUser = User(email: userInfo.email,
+                                   firstName: userInfo.name,
+                                   secondName:  userInfo.name)
+                return  req.users.create(newUser).transform(to: newUser)
+                
+            }
+        }
+        .flatMapThrowing { user in
+            let token = try user.getToken(req)
+            return SuccessResponseModel(data: AuthResponse(user: user, token: token))
         }
         
     }

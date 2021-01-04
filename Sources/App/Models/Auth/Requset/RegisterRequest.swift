@@ -11,6 +11,7 @@ import Vapor
 struct RegisterRequest: Content {
     let email: String
     let password: String
+    let pushToken: String
 }
 
 extension RegisterRequest: Validatable {

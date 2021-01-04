@@ -19,6 +19,7 @@ struct CreateUsers: Migration {
             .field(User.FieldKeys.firstName, .string)
             .field(User.FieldKeys.secondName, .string)
             .field(User.FieldKeys.avatarImageKey, .string)
+            .field(User.FieldKeys.pushToken, .string)
             .unique(on: User.FieldKeys.email)
             .create()
     }

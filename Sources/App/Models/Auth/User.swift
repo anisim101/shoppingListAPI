@@ -11,6 +11,14 @@ import Fluent
 import FluentPostgresDriver
 import JWT
 
+struct UserResponse: Content {
+    var id: UUID?
+    var email: String
+    var firstName: String?
+    var secondName: String?
+    var avatarImageKey: String?
+}
+
 final class User: Model, Content, UserInfoProtocol {
     
     enum FieldKeys {
@@ -19,6 +27,7 @@ final class User: Model, Content, UserInfoProtocol {
         static var avatarImageKey: FieldKey = "avatar_image_key"
         static var firstName: FieldKey = "first_name"
         static var secondName: FieldKey = "second_name"
+        static var pushToken: FieldKey = "push_token"
     }
 
     static var schema: String = "users"
@@ -41,6 +50,9 @@ final class User: Model, Content, UserInfoProtocol {
     @Field(key: FieldKeys.avatarImageKey)
     var avatarImageKey: String?
     
+    @Field(key: FieldKeys.pushToken)
+    var pushToken: String?
+    
     
     @Siblings(through: UserLists.self, from: \.$user, to: \.$list)
     var allLists: [ShoppingList]
@@ -53,12 +65,14 @@ final class User: Model, Content, UserInfoProtocol {
     init(email: String, hashPassword: String? = nil ,
          avatarImageKey: String? = nil,
          firstName: String? = nil,
-         secondName: String? = nil) {
+         secondName: String? = nil,
+         pushToken: String? = nil) {
         self.email = email
         self.hashPassword = hashPassword
         self.firstName = firstName
         self.secondName = secondName
         self.avatarImageKey = avatarImageKey
+        self.pushToken = pushToken
     }
     
     func getToken(_ req: Request) throws -> String {
