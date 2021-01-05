@@ -88,7 +88,6 @@ class AuthController: RouteCollection {
             let firstName: String?
             let lastName: String?
             let appleIdentityToken: String
-            let pushToken: String
         }
         
         guard let userBody = try? req.content.decode(SIWARequestBody.self) else { throw RequestError.wrongRequest }
